@@ -2,7 +2,7 @@
 
 Estimate the GPU memory needed to run an LLM for inference (weights + KV cache + overhead) and see which GPU setups fit. Results are estimates, shown in GB (10⁹ bytes).
 
-Live: https://gpu-sizing-calculator.hoangvuong94st.workers.dev
+Live: https://vram.builtbyglenn.com
 
 ## How the estimate works
 
