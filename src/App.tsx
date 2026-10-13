@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { CopyLinkButton } from './components/CopyLinkButton'
 import { InputForm } from './components/InputForm'
 import { GpuRecommendations } from './components/GpuRecommendations'
 import { MemoryBreakdown } from './components/MemoryBreakdown'
 import { ShowTheMath } from './components/ShowTheMath'
 import { GPU_COUNTS, GPUS, type GpuSpec } from './data/gpus'
-import { DEFAULT_INPUTS, findPreset, resolveModel, type CalculatorInputs } from './inputs'
+import { findPreset, resolveModel, type CalculatorInputs } from './inputs'
 import {
   estimateMemory,
   recommendGpus,
@@ -12,18 +13,30 @@ import {
   type MemoryBreakdown as Breakdown,
 } from './lib/calc'
 import { buildMathSteps, type MathStep } from './lib/mathSteps'
+import { inputsToSearch, searchToInputs } from './urlState'
 
 function App() {
-  const [inputs, setInputs] = useState<CalculatorInputs>(DEFAULT_INPUTS)
+  const [inputs, setInputs] = useState<CalculatorInputs>(() =>
+    searchToInputs(window.location.search),
+  )
+
+  // Keep the URL in sync so it can be shared. replaceState avoids a history entry per keystroke.
+  useEffect(() => {
+    window.history.replaceState(null, '', inputsToSearch(inputs))
+  }, [inputs])
+
   const result = calculate(inputs)
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <header className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">GPU Sizing Calculator</h1>
-        <p className="mt-2 text-slate-600">
-          Estimate how much GPU memory an LLM needs for inference, and which GPU setups fit.
-        </p>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">GPU Sizing Calculator</h1>
+          <p className="mt-2 text-slate-600">
+            Estimate how much GPU memory an LLM needs for inference, and which GPU setups fit.
+          </p>
+        </div>
+        <CopyLinkButton />
       </header>
 
       <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
