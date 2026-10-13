@@ -1,8 +1,15 @@
 import { useState } from 'react'
 import { InputForm } from './components/InputForm'
+import { GpuRecommendations } from './components/GpuRecommendations'
 import { MemoryBreakdown } from './components/MemoryBreakdown'
-import { DEFAULT_INPUTS, resolveModel, type CalculatorInputs } from './inputs'
-import { estimateMemory, type MemoryBreakdown as Breakdown } from './lib/calc'
+import { GPU_COUNTS, GPUS, type GpuSpec } from './data/gpus'
+import { DEFAULT_INPUTS, findPreset, resolveModel, type CalculatorInputs } from './inputs'
+import {
+  estimateMemory,
+  recommendGpus,
+  type GpuFit,
+  type MemoryBreakdown as Breakdown,
+} from './lib/calc'
 
 function App() {
   const [inputs, setInputs] = useState<CalculatorInputs>(DEFAULT_INPUTS)
@@ -21,11 +28,21 @@ function App() {
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <InputForm inputs={inputs} onChange={(patch) => setInputs({ ...inputs, ...patch })} />
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:self-start">
+        <div className="flex flex-col gap-8 md:self-start">
           {result.ok ? (
-            <MemoryBreakdown breakdown={result.breakdown} />
+            <>
+              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <MemoryBreakdown breakdown={result.breakdown} />
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <GpuRecommendations fits={result.fits} maxCount={Math.max(...GPU_COUNTS)} />
+              </div>
+            </>
           ) : (
-            <p role="alert" className="text-sm text-red-700">
+            <p
+              role="alert"
+              className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-red-700 shadow-sm"
+            >
               {result.error}
             </p>
           )}
@@ -46,12 +63,22 @@ const FIELD_LABELS: Record<string, string> = {
   overheadPercent: 'Overhead margin',
 }
 
-type CalcResult = { ok: true; breakdown: Breakdown } | { ok: false; error: string }
+type CalcResult =
+  { ok: true; breakdown: Breakdown; fits: GpuFit<GpuSpec>[] } | { ok: false; error: string }
 
 /** The calc functions throw on invalid input (e.g. a cleared field); show that instead of crashing. */
 function calculate(inputs: CalculatorInputs): CalcResult {
   try {
-    return { ok: true, breakdown: estimateMemory(resolveModel(inputs), inputs) }
+    // Attention heads limit which GPU counts a model can be split across; custom models skip that check.
+    const model = {
+      ...resolveModel(inputs),
+      numAttentionHeads: findPreset(inputs.modelId)?.numAttentionHeads,
+    }
+    return {
+      ok: true,
+      breakdown: estimateMemory(model, inputs),
+      fits: recommendGpus(model, inputs, GPUS, GPU_COUNTS),
+    }
   } catch (e) {
     if (e instanceof RangeError) {
       const field = Object.keys(FIELD_LABELS).find((k) => e.message.startsWith(k))
