@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { InputForm } from './components/InputForm'
 import { GpuRecommendations } from './components/GpuRecommendations'
 import { MemoryBreakdown } from './components/MemoryBreakdown'
+import { ShowTheMath } from './components/ShowTheMath'
 import { GPU_COUNTS, GPUS, type GpuSpec } from './data/gpus'
 import { DEFAULT_INPUTS, findPreset, resolveModel, type CalculatorInputs } from './inputs'
 import {
@@ -10,6 +11,7 @@ import {
   type GpuFit,
   type MemoryBreakdown as Breakdown,
 } from './lib/calc'
+import { buildMathSteps, type MathStep } from './lib/mathSteps'
 
 function App() {
   const [inputs, setInputs] = useState<CalculatorInputs>(DEFAULT_INPUTS)
@@ -33,6 +35,9 @@ function App() {
             <>
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <MemoryBreakdown breakdown={result.breakdown} />
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <ShowTheMath steps={result.steps} />
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <GpuRecommendations fits={result.fits} maxCount={Math.max(...GPU_COUNTS)} />
@@ -64,7 +69,8 @@ const FIELD_LABELS: Record<string, string> = {
 }
 
 type CalcResult =
-  { ok: true; breakdown: Breakdown; fits: GpuFit<GpuSpec>[] } | { ok: false; error: string }
+  | { ok: true; breakdown: Breakdown; fits: GpuFit<GpuSpec>[]; steps: MathStep[] }
+  | { ok: false; error: string }
 
 /** The calc functions throw on invalid input (e.g. a cleared field); show that instead of crashing. */
 function calculate(inputs: CalculatorInputs): CalcResult {
@@ -78,6 +84,7 @@ function calculate(inputs: CalculatorInputs): CalcResult {
       ok: true,
       breakdown: estimateMemory(model, inputs),
       fits: recommendGpus(model, inputs, GPUS, GPU_COUNTS),
+      steps: buildMathSteps(model, inputs),
     }
   } catch (e) {
     if (e instanceof RangeError) {
