@@ -18,4 +18,4 @@ npm run build        # production build into dist/
 
 ## Deployment
 
-Deployed on Cloudflare Pages via its GitHub integration: build command `npm run build`, output directory `dist`. Pushes to `main` deploy to production; pull requests get preview deploys.
+Deployed on Cloudflare Workers (static assets) via Workers Builds, Cloudflare's GitHub integration. `wrangler.jsonc` runs `npm run build` and serves `dist/`; no server code is involved. Pushes to `main` deploy to production; other branches get preview builds.
