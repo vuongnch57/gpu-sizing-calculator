@@ -55,3 +55,7 @@ npm run build        # production build into dist/
 ## Deployment
 
 Deployed on Cloudflare Workers (static assets) via Workers Builds, Cloudflare's GitHub integration. `wrangler.jsonc` runs `npm run build` and serves `dist/`; no server code is involved. Pushes to `main` deploy to production; other branches get preview builds.
+
+## Analytics
+
+Page views are counted with [Cloudflare Web Analytics](https://developers.cloudflare.com/web-analytics/) (cookieless, no personal data). `vite.config.ts` adds the beacon script to `index.html` only when `VITE_CF_BEACON_TOKEN` is set at build time (in `.env.production` or as a Workers Builds build variable), so local dev sends nothing.
