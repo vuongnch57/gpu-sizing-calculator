@@ -66,6 +66,12 @@ function App() {
           )}
         </div>
       </div>
+
+      <footer className="mt-12 text-center text-sm text-slate-500">
+        <a href="https://builtbyglenn.com" className="underline hover:text-slate-700">
+          Built by Glenn
+        </a>
+      </footer>
     </main>
   )
 }

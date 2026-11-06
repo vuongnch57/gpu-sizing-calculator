@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vram.builtbyglenn.com/sitemap.xml
